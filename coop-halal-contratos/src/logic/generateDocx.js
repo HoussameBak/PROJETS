@@ -2,10 +2,12 @@ import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
 
+const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 /**
- * Rellena la plantilla cargada con los valores resueltos, conservando
- * el formato original (negritas, espaciado, tablas). Devuelve el objeto
- * Docxtemplater ya renderizado.
+ * Rellena la plantilla con los valores resueltos, conservando el formato
+ * original (negritas, espaciado, tablas). Devuelve el objeto Docxtemplater.
  */
 function renderDoc(arrayBuffer, values) {
   const zip = new PizZip(arrayBuffer);
@@ -13,7 +15,7 @@ function renderDoc(arrayBuffer, values) {
     delimiters: { start: "{{", end: "}}" },
     paragraphLoop: true,
     linebreaks: true,
-    nullGetter: () => "", // placeholders no resueltos → en blanco, sin romper
+    nullGetter: () => "",
   });
   doc.render(values);
   return doc;
@@ -33,26 +35,29 @@ function formatDocxError(error) {
 }
 
 /**
- * Genera y descarga el .docx relleno con el nombre indicado.
+ * Genera el blob .docx relleno sin descargarlo.
+ * Útil para construir ZIPs o cualquier uso posterior.
  */
-export function downloadDocx(arrayBuffer, values, fileName) {
+export function generateDocxBlob(arrayBuffer, values) {
   let doc;
   try {
     doc = renderDoc(arrayBuffer, values);
   } catch (error) {
     throw new Error(formatDocxError(error), { cause: error });
   }
-  const blob = doc.getZip().generate({
-    type: "blob",
-    mimeType:
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  });
+  return doc.getZip().generate({ type: "blob", mimeType: DOCX_MIME });
+}
+
+/**
+ * Genera y descarga el .docx relleno con el nombre indicado.
+ */
+export function downloadDocx(arrayBuffer, values, fileName) {
+  const blob = generateDocxBlob(arrayBuffer, values);
   saveAs(blob, fileName);
 }
 
 /**
  * Devuelve una vista previa en texto plano del contrato relleno.
- * (Solo texto: el formato Word completo se conserva en el .docx descargado.)
  */
 export function getContractPreview(arrayBuffer, values) {
   let doc;

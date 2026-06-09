@@ -184,6 +184,117 @@ h1 {
   text-align: center;
 }
 
+/* --- Toggle de modo --- */
+.mode-toggle {
+  margin-bottom: 12px;
+}
+
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-h);
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* --- Selección múltiple --- */
+.multi-selector {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.multi-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--code-bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.multi-count {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-link:hover {
+  opacity: 0.75;
+}
+
+.client-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.client-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.client-item:last-child {
+  border-bottom: none;
+}
+
+.client-item label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  font-size: 14px;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.client-item label:hover {
+  background: var(--accent-bg);
+}
+
+.client-item-checked label {
+  background: var(--accent-bg);
+  font-weight: 600;
+}
+
+.client-item input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.preview-note {
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
 /* --- Impresión: solo se ve el contrato --- */
 @media print {
   .no-print {
