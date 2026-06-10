@@ -6,7 +6,12 @@ import MultiClientSelector from "./components/MultiClientSelector.jsx";
 import PlaceholderStatus from "./components/PlaceholderStatus.jsx";
 import ContractPreview from "./components/ContractPreview.jsx";
 import { readExcel } from "./logic/readExcel.js";
-import { readTemplate } from "./logic/readTemplate.js";
+import {
+  readTemplate,
+  saveTemplateToCache,
+  loadTemplateFromCache,
+  clearTemplateCache,
+} from "./logic/readTemplate.js";
 import { resolveValues, findUnresolvedPlaceholders } from "./logic/resolveValues.js";
 import { downloadDocx, getContractPreview } from "./logic/generateDocx.js";
 import { downloadZip } from "./logic/generateZip.js";
@@ -17,15 +22,20 @@ const safeName = (s) =>
     .replace(/[\\/:*?"<>|]/g, "_")
     .trim() || "sin_dato";
 
+// Se lee una sola vez al cargar el módulo: evita repetir la lectura de
+// localStorage en cada inicialización de estado perezosa.
+const cachedTemplate = loadTemplateFromCache();
+
 export default function App() {
   // --- datos cargados ---
   const [clients, setClients] = useState([]);
   const [columns, setColumns] = useState([]);
   const [excelName, setExcelName] = useState("");
 
-  const [templateBuffer, setTemplateBuffer] = useState(null);
-  const [placeholders, setPlaceholders] = useState([]);
-  const [templateName, setTemplateName] = useState("");
+  const [templateBuffer, setTemplateBuffer] = useState(cachedTemplate?.arrayBuffer ?? null);
+  const [placeholders, setPlaceholders] = useState(cachedTemplate?.placeholders ?? []);
+  const [templateName, setTemplateName] = useState(cachedTemplate?.fileName ?? "");
+  const [templateFromCache, setTemplateFromCache] = useState(!!cachedTemplate);
 
   // --- modo de selección ---
   const [multiMode, setMultiMode] = useState(false);
@@ -65,12 +75,24 @@ export default function App() {
       setTemplateBuffer(arrayBuffer);
       setPlaceholders(phs);
       setTemplateName(file.name);
+      setTemplateFromCache(false);
+      saveTemplateToCache(arrayBuffer, file.name);
     } catch (err) {
       setTemplateBuffer(null);
       setPlaceholders([]);
       setTemplateName("");
+      setTemplateFromCache(false);
       setError(err.message);
     }
+  };
+
+  // --- descartar plantilla guardada y permitir cargar otra ---
+  const handleChangeTemplate = () => {
+    clearTemplateCache();
+    setTemplateBuffer(null);
+    setPlaceholders([]);
+    setTemplateName("");
+    setTemplateFromCache(false);
   };
 
   // --- toggle modo ---
@@ -162,7 +184,7 @@ export default function App() {
   const downloadDisabled =
     !ready ||
     !!preview.error ||
-    (multiMode ? multiCount === 0 : false) ||
+    (multiMode ? multiCount === 0 : selectedIndex < 0) ||
     zipLoading;
 
   return (
@@ -178,7 +200,12 @@ export default function App() {
 
       <section className="loaders no-print">
         <ExcelUploader onLoad={handleExcel} fileName={excelName} />
-        <TemplateUploader onLoad={handleTemplate} fileName={templateName} />
+        <TemplateUploader
+          onLoad={handleTemplate}
+          fileName={templateName}
+          fromCache={templateFromCache}
+          onChangeTemplate={handleChangeTemplate}
+        />
       </section>
 
       {error && (
