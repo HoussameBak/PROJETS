@@ -206,6 +206,26 @@ h1 {
   font-size: 14px;
 }
 
+.excel-summary {
+  font-size: 14px;
+  color: var(--text-h);
+  margin: 4px 0 12px;
+}
+
+.client-warning {
+  margin-top: 8px;
+  max-width: 480px;
+}
+
+.client-warning ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.warn-icon {
+  margin-right: 2px;
+}
+
 /* --- Botones --- */
 .actions {
   display: flex;

@@ -13,6 +13,7 @@ import {
   clearTemplateCache,
 } from "./logic/readTemplate.js";
 import { resolveValues, findUnresolvedPlaceholders } from "./logic/resolveValues.js";
+import { validateClient } from "./logic/validateClient.js";
 import { downloadDocx, getContractPreview } from "./logic/generateDocx.js";
 import { downloadZip } from "./logic/generateZip.js";
 import "./App.css";
@@ -135,6 +136,21 @@ export default function App() {
     [placeholders, columns]
   );
 
+  // --- validación de datos de clientes ---
+  const clientErrorsList = useMemo(() => clients.map(validateClient), [clients]);
+
+  const clientsWithWarnings = useMemo(
+    () => clientErrorsList.filter((errs) => errs.length > 0).length,
+    [clientErrorsList]
+  );
+
+  const selectedErrors = selectedIndex >= 0 ? clientErrorsList[selectedIndex] || [] : [];
+
+  const selectedSetWarnings = useMemo(
+    () => [...selectedSet].filter((i) => clientErrorsList[i]?.length > 0).length,
+    [selectedSet, clientErrorsList]
+  );
+
   const preview = useMemo(() => {
     if (!templateBuffer || !resolved) return { text: "", error: "" };
     try {
@@ -208,6 +224,14 @@ export default function App() {
         />
       </section>
 
+      {clients.length > 0 && (
+        <p className="excel-summary no-print">
+          {clientsWithWarnings > 0
+            ? `${clients.length} clientes cargados. ${clientsWithWarnings} con advertencias de validación.`
+            : `${clients.length} clientes cargados.`}
+        </p>
+      )}
+
       {error && (
         <pre className="error no-print" role="alert">
           {error}
@@ -237,16 +261,31 @@ export default function App() {
             <MultiClientSelector
               clients={clients}
               selected={selectedSet}
+              clientErrorsList={clientErrorsList}
+              selectedSetWarnings={selectedSetWarnings}
               onToggle={handleToggleClient}
               onSelectAll={handleSelectAll}
               onDeselectAll={handleDeselectAll}
             />
           ) : (
-            <ClientSelector
-              clients={clients}
-              selectedIndex={selectedIndex}
-              onSelect={setSelectedIndex}
-            />
+            <>
+              <ClientSelector
+                clients={clients}
+                selectedIndex={selectedIndex}
+                onSelect={setSelectedIndex}
+              />
+              {selectedErrors.length > 0 && (
+                <div className="warning client-warning">
+                  ⚠️ Este contrato se generará con campos en blanco. Revisa el
+                  Excel antes de descargar.
+                  <ul>
+                    {selectedErrors.map((e) => (
+                      <li key={e}>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
         </section>
       )}
