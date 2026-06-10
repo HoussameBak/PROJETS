@@ -10,7 +10,6 @@ import { readTemplate } from "./logic/readTemplate.js";
 import { resolveValues, findUnresolvedPlaceholders } from "./logic/resolveValues.js";
 import { downloadDocx, getContractPreview } from "./logic/generateDocx.js";
 import { downloadZip } from "./logic/generateZip.js";
-import { downloadContractPdf } from "./logic/generatePdf.js";
 import "./App.css";
 
 const safeName = (s) =>
@@ -37,7 +36,6 @@ export default function App() {
 
   const [error, setError] = useState("");
   const [zipLoading, setZipLoading] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // --- carga Excel ---
   const handleExcel = async (file) => {
@@ -153,22 +151,6 @@ export default function App() {
     }
   };
 
-  // --- descarga PDF (fiel al .docx: negritas, párrafos, tabla de firmas) ---
-  const handleDownloadPdf = async () => {
-    const client = multiMode ? clients[Math.min(...selectedSet)] : clients[selectedIndex];
-    if (!templateBuffer || !client || !resolved) return;
-    setError("");
-    setPdfLoading(true);
-    try {
-      const fileName = `${safeName(client.N_contrato)}_${safeName(client.Nombre)}.pdf`;
-      await downloadContractPdf(templateBuffer, resolved, fileName);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setPdfLoading(false);
-    }
-  };
-
   const ready = clients.length > 0 && !!templateBuffer && placeholders.length > 0;
 
   // En modo múltiple: cuántos están seleccionados
@@ -181,8 +163,7 @@ export default function App() {
     !ready ||
     !!preview.error ||
     (multiMode ? multiCount === 0 : false) ||
-    zipLoading ||
-    pdfLoading;
+    zipLoading;
 
   return (
     <div className="app">
@@ -244,41 +225,36 @@ export default function App() {
       )}
 
       {ready && (
-        <div className="actions no-print">
-          {/* PDF: solo en modo individual (vista previa de un contrato) */}
-          {!multiMode && (
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              disabled={downloadDisabled}
-            >
-              {pdfLoading ? "⏳ Generando PDF…" : "🖨️ Descargar PDF"}
-            </button>
-          )}
+        <div className="actions-wrapper no-print">
+          <div className="actions">
+            {/* ZIP: modo múltiple con > 1 seleccionados */}
+            {showZip && (
+              <button
+                type="button"
+                onClick={handleDownloadZip}
+                disabled={downloadDisabled}
+              >
+                {zipLoading
+                  ? `⏳ Generando ZIP (${multiCount})…`
+                  : `📦 Descargar ZIP (${multiCount} contratos)`}
+              </button>
+            )}
 
-          {/* ZIP: modo múltiple con > 1 seleccionados */}
-          {showZip && (
-            <button
-              type="button"
-              onClick={handleDownloadZip}
-              disabled={downloadDisabled}
-            >
-              {zipLoading
-                ? `⏳ Generando ZIP (${multiCount})…`
-                : `📦 Descargar ZIP (${multiCount} contratos)`}
-            </button>
-          )}
-
-          {/* Word individual: modo individual O exactamente 1 seleccionado en multi */}
-          {(!multiMode || showSingleFromMulti) && (
-            <button
-              type="button"
-              onClick={handleDownloadSingle}
-              disabled={downloadDisabled}
-            >
-              📄 Descargar Word (.docx)
-            </button>
-          )}
+            {/* Word individual: modo individual O exactamente 1 seleccionado en multi */}
+            {(!multiMode || showSingleFromMulti) && (
+              <button
+                type="button"
+                onClick={handleDownloadSingle}
+                disabled={downloadDisabled}
+              >
+                📄 Descargar Word (.docx)
+              </button>
+            )}
+          </div>
+          <p className="help-text">
+            Para obtener un PDF, descarga el Word y usa{" "}
+            <strong>Archivo → Guardar como → PDF</strong> en Word o Google Docs.
+          </p>
         </div>
       )}
 

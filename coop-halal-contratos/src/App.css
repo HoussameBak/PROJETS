@@ -154,6 +154,13 @@ h1 {
   cursor: not-allowed;
 }
 
+.help-text {
+  margin-top: -8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
 /* --- Vista previa --- */
 .preview-section {
   margin-top: 16px;
