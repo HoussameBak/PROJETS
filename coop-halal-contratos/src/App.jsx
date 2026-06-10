@@ -10,6 +10,7 @@ import { readTemplate } from "./logic/readTemplate.js";
 import { resolveValues, findUnresolvedPlaceholders } from "./logic/resolveValues.js";
 import { downloadDocx, getContractPreview } from "./logic/generateDocx.js";
 import { downloadZip } from "./logic/generateZip.js";
+import { downloadContractPdf } from "./logic/generatePdf.js";
 import "./App.css";
 
 const safeName = (s) =>
@@ -36,6 +37,7 @@ export default function App() {
 
   const [error, setError] = useState("");
   const [zipLoading, setZipLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // --- carga Excel ---
   const handleExcel = async (file) => {
@@ -151,7 +153,21 @@ export default function App() {
     }
   };
 
-  const handlePrint = () => window.print();
+  // --- descarga PDF (fiel al .docx: negritas, párrafos, tabla de firmas) ---
+  const handleDownloadPdf = async () => {
+    const client = multiMode ? clients[Math.min(...selectedSet)] : clients[selectedIndex];
+    if (!templateBuffer || !client || !resolved) return;
+    setError("");
+    setPdfLoading(true);
+    try {
+      const fileName = `${safeName(client.N_contrato)}_${safeName(client.Nombre)}.pdf`;
+      await downloadContractPdf(templateBuffer, resolved, fileName);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const ready = clients.length > 0 && !!templateBuffer && placeholders.length > 0;
 
@@ -165,7 +181,8 @@ export default function App() {
     !ready ||
     !!preview.error ||
     (multiMode ? multiCount === 0 : false) ||
-    zipLoading;
+    zipLoading ||
+    pdfLoading;
 
   return (
     <div className="app">
@@ -228,14 +245,14 @@ export default function App() {
 
       {ready && (
         <div className="actions no-print">
-          {/* Imprimir: solo en modo individual */}
+          {/* PDF: solo en modo individual (vista previa de un contrato) */}
           {!multiMode && (
             <button
               type="button"
-              onClick={handlePrint}
-              disabled={!resolved || !!preview.error}
+              onClick={handleDownloadPdf}
+              disabled={downloadDisabled}
             >
-              🖨️ Imprimir / Guardar PDF
+              {pdfLoading ? "⏳ Generando PDF…" : "🖨️ Descargar PDF"}
             </button>
           )}
 
