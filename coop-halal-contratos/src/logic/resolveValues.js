@@ -11,6 +11,7 @@ const RULE_KEYS = new Set([
   "y_segundo",
   "firma2",
   "documento2_firma",
+  "y_documento2",
 ]);
 
 /**
@@ -107,6 +108,10 @@ export function resolveValues(client, placeholders) {
     }
     if (ph === "documento2_firma") {
       values[ph] = esPareja && documento2 ? `\n${documento2}` : "";
+      continue;
+    }
+    if (ph === "y_documento2") {
+      values[ph] = esPareja && documento2 ? ` y ${documento2}` : "";
       continue;
     }
 

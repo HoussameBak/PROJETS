@@ -7,6 +7,8 @@ export const GENERO = {
     del_interesado: "del Interesado",
     socio: "socio",
     provisto: "provisto",
+    mayor: "mayor",
+    el_gestor: "El Gestor",
   },
   mujer: {
     tratamiento: "Dña.",
@@ -16,6 +18,8 @@ export const GENERO = {
     del_interesado: "de la Interesada",
     socio: "socia",
     provisto: "provista",
+    mayor: "mayor",
+    el_gestor: "El Gestor",
   },
 };
 
@@ -26,4 +30,6 @@ export const PAREJA = {
   al_interesado: "a los Interesados",
   del_interesado: "de los Interesados",
   socio: "socios",
+  mayor: "mayores",
+  el_gestor: "Los Gestores",
 };
