@@ -33,5 +33,20 @@ export function validateClient(client) {
     errors.push("Fecha vacía");
   }
 
+  if (normalize(client.Tipo_cuenta) === "pareja") {
+    if (!normalize(client.Nombre2)) {
+      errors.push("Nombre del segundo titular vacío");
+    }
+    if (!GENEROS_VALIDOS.has(normalize(client.Genero2))) {
+      errors.push("Género del segundo titular no reconocido");
+    }
+    if (!TIPOS_DOC_VALIDOS.has(normalize(client.Tipo_doc2))) {
+      errors.push("Tipo de documento del segundo titular no reconocido");
+    }
+    if (!normalize(client.Num_documento2)) {
+      errors.push("Número de documento del segundo titular vacío");
+    }
+  }
+
   return errors;
 }
