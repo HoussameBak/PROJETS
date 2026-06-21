@@ -17,6 +17,34 @@ h1 {
   line-height: 1.5;
 }
 
+/* --- Pestañas --- */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tab-btn:hover {
+  color: var(--text-h);
+}
+
+.tab-btn-active {
+  color: var(--text-h);
+  border-bottom-color: var(--accent);
+}
+
 /* --- Cargas --- */
 .loaders {
   display: flex;
@@ -283,6 +311,15 @@ h1 {
 
 .preview-error {
   white-space: pre-wrap;
+}
+
+.card-preview {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
 }
 
 .preview-empty {

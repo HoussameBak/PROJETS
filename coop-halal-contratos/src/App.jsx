@@ -5,6 +5,7 @@ import ClientSelector from "./components/ClientSelector.jsx";
 import MultiClientSelector from "./components/MultiClientSelector.jsx";
 import PlaceholderStatus from "./components/PlaceholderStatus.jsx";
 import ContractPreview from "./components/ContractPreview.jsx";
+import CardGenerator from "./components/CardGenerator.jsx";
 import { readExcel } from "./logic/readExcel.js";
 import {
   readTemplate,
@@ -28,6 +29,9 @@ const safeName = (s) =>
 const cachedTemplate = loadTemplateFromCache();
 
 export default function App() {
+  // --- pestaña activa: dos flujos independientes que comparten el Excel ---
+  const [activeTab, setActiveTab] = useState("contratos");
+
   // --- datos cargados ---
   const [clients, setClients] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -208,20 +212,38 @@ export default function App() {
       <header className="no-print">
         <h1>Generador de contratos CoopHalal</h1>
         <p className="subtitle">
-          Carga un Excel de clientes y una plantilla <code>.docx</code> con
-          placeholders <code>{"{{...}}"}</code>. La app detecta los placeholders
-          y los rellena automáticamente.
+          Carga un Excel de clientes y, según la pestaña, una plantilla{" "}
+          <code>.docx</code> de contrato o una imagen de fondo de tarjeta.
         </p>
       </header>
 
+      <div className="tabs no-print">
+        <button
+          type="button"
+          className={`tab-btn${activeTab === "contratos" ? " tab-btn-active" : ""}`}
+          onClick={() => setActiveTab("contratos")}
+        >
+          📄 Contratos
+        </button>
+        <button
+          type="button"
+          className={`tab-btn${activeTab === "tarjetas" ? " tab-btn-active" : ""}`}
+          onClick={() => setActiveTab("tarjetas")}
+        >
+          📇 Tarjetas de socio
+        </button>
+      </div>
+
       <section className="loaders no-print">
         <ExcelUploader onLoad={handleExcel} fileName={excelName} />
-        <TemplateUploader
-          onLoad={handleTemplate}
-          fileName={templateName}
-          fromCache={templateFromCache}
-          onChangeTemplate={handleChangeTemplate}
-        />
+        {activeTab === "contratos" && (
+          <TemplateUploader
+            onLoad={handleTemplate}
+            fileName={templateName}
+            fromCache={templateFromCache}
+            onChangeTemplate={handleChangeTemplate}
+          />
+        )}
       </section>
 
       {clients.length > 0 && (
@@ -238,100 +260,107 @@ export default function App() {
         </pre>
       )}
 
-      {templateName && (
-        <section className="template-info no-print">
-          <PlaceholderStatus placeholders={placeholders} unresolved={unresolved} />
-        </section>
-      )}
-
-      {clients.length > 0 && (
-        <section className="no-print">
-          <div className="mode-toggle">
-            <label className="toggle-label">
-              <input
-                type="checkbox"
-                checked={multiMode}
-                onChange={handleToggleMode}
-              />
-              Selección múltiple
-            </label>
-          </div>
-
-          {multiMode ? (
-            <MultiClientSelector
-              clients={clients}
-              selected={selectedSet}
-              clientErrorsList={clientErrorsList}
-              selectedSetWarnings={selectedSetWarnings}
-              onToggle={handleToggleClient}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-            />
-          ) : (
-            <>
-              <ClientSelector
-                clients={clients}
-                selectedIndex={selectedIndex}
-                onSelect={setSelectedIndex}
-              />
-              {selectedErrors.length > 0 && (
-                <div className="warning client-warning">
-                  ⚠️ Este contrato se generará con campos en blanco. Revisa el
-                  Excel antes de descargar.
-                  <ul>
-                    {selectedErrors.map((e) => (
-                      <li key={e}>{e}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </>
+      {activeTab === "contratos" ? (
+        <>
+          {templateName && (
+            <section className="template-info no-print">
+              <PlaceholderStatus placeholders={placeholders} unresolved={unresolved} />
+            </section>
           )}
-        </section>
-      )}
 
-      {ready && (
-        <div className="actions-wrapper no-print">
-          <div className="actions">
-            {/* ZIP: modo múltiple con > 1 seleccionados */}
-            {showZip && (
-              <button
-                type="button"
-                onClick={handleDownloadZip}
-                disabled={downloadDisabled}
-              >
-                {zipLoading
-                  ? `⏳ Generando ZIP (${multiCount})…`
-                  : `📦 Descargar ZIP (${multiCount} contratos)`}
-              </button>
+          {clients.length > 0 && (
+            <section className="no-print">
+              <div className="mode-toggle">
+                <label className="toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={multiMode}
+                    onChange={handleToggleMode}
+                  />
+                  Selección múltiple
+                </label>
+              </div>
+
+              {multiMode ? (
+                <MultiClientSelector
+                  clients={clients}
+                  selected={selectedSet}
+                  clientErrorsList={clientErrorsList}
+                  selectedSetWarnings={selectedSetWarnings}
+                  onToggle={handleToggleClient}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={handleDeselectAll}
+                />
+              ) : (
+                <>
+                  <ClientSelector
+                    clients={clients}
+                    selectedIndex={selectedIndex}
+                    onSelect={setSelectedIndex}
+                  />
+                  {selectedErrors.length > 0 && (
+                    <div className="warning client-warning">
+                      ⚠️ Este contrato se generará con campos en blanco. Revisa
+                      el Excel antes de descargar.
+                      <ul>
+                        {selectedErrors.map((e) => (
+                          <li key={e}>{e}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+
+          {ready && (
+            <div className="actions-wrapper no-print">
+              <div className="actions">
+                {/* ZIP: modo múltiple con > 1 seleccionados */}
+                {showZip && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadZip}
+                    disabled={downloadDisabled}
+                  >
+                    {zipLoading
+                      ? `⏳ Generando ZIP (${multiCount})…`
+                      : `📦 Descargar ZIP (${multiCount} contratos)`}
+                  </button>
+                )}
+
+                {/* Word individual: modo individual O exactamente 1 seleccionado en multi */}
+                {(!multiMode || showSingleFromMulti) && (
+                  <button
+                    type="button"
+                    onClick={handleDownloadSingle}
+                    disabled={downloadDisabled}
+                  >
+                    📄 Descargar Word (.docx)
+                  </button>
+                )}
+              </div>
+              <p className="help-text">
+                Para obtener un PDF, descarga el Word y usa{" "}
+                <strong>Archivo → Guardar como → PDF</strong> en Word o Google
+                Docs.
+              </p>
+            </div>
+          )}
+
+          <section className="preview-section">
+            {multiMode && multiCount > 1 && preview.text && (
+              <p className="preview-note no-print">
+                Vista previa del primer contrato seleccionado
+              </p>
             )}
-
-            {/* Word individual: modo individual O exactamente 1 seleccionado en multi */}
-            {(!multiMode || showSingleFromMulti) && (
-              <button
-                type="button"
-                onClick={handleDownloadSingle}
-                disabled={downloadDisabled}
-              >
-                📄 Descargar Word (.docx)
-              </button>
-            )}
-          </div>
-          <p className="help-text">
-            Para obtener un PDF, descarga el Word y usa{" "}
-            <strong>Archivo → Guardar como → PDF</strong> en Word o Google Docs.
-          </p>
-        </div>
+            <ContractPreview text={preview.text} error={preview.error} />
+          </section>
+        </>
+      ) : (
+        <CardGenerator clients={clients} />
       )}
-
-      <section className="preview-section">
-        {multiMode && multiCount > 1 && preview.text && (
-          <p className="preview-note no-print">
-            Vista previa del primer contrato seleccionado
-          </p>
-        )}
-        <ContractPreview text={preview.text} error={preview.error} />
-      </section>
     </div>
   );
 }
