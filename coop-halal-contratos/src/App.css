@@ -313,15 +313,6 @@ h1 {
   white-space: pre-wrap;
 }
 
-.card-preview {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-}
-
 .preview-empty {
   padding: 32px;
   border: 1px dashed var(--border);
