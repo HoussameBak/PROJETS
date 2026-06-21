@@ -7,17 +7,17 @@ const REF_PAGE_WIDTH = 2400.75;
 const REF_PAGE_HEIGHT = 1920.75;
 
 // Rectángulos de los campos en puntos PDF, medidos sobre la página de
-// referencia. yTop1/yTop2 miden desde el borde SUPERIOR de la página
-// (como en un PDF leído visualmente); se convierten más abajo al sistema
-// de coordenadas de pdf-lib, que mide desde el borde inferior.
+// referencia. startX es donde empieza el texto a rellenar (justo después
+// de la etiqueta impresa); yTop1/yTop2 miden desde el borde SUPERIOR de la
+// página (como en un PDF leído visualmente) y se convierten más abajo al
+// sistema de coordenadas de pdf-lib, que mide desde el borde inferior.
 const FIELDS = {
-  numSocio: { x1: 855, x2: 2090, yTop1: 1144.7, yTop2: 1261.1 },
-  titular: { x1: 795, x2: 2090, yTop1: 1269.2, yTop2: 1385.6 },
+  numSocio: { startX: 860, yTop1: 1136.8, yTop2: 1253.1 },
+  titular: { startX: 680, yTop1: 1261.3, yTop2: 1377.6 },
 };
 
-const FONT_SIZE_REF = 48; // pt, sobre la página de referencia
-const PADDING_REF = 20; // pt, sobre la página de referencia
-const TEXT_COLOR = rgb(0.24, 0.24, 0.24);
+const FONT_SIZE_REF = 100; // pt, sobre la página de referencia
+const TEXT_COLOR = rgb(0.1, 0.1, 0.1);
 
 /**
  * Número de socio/a: usa la columna NumTarjeta si existe en el Excel,
@@ -35,25 +35,21 @@ function getNumSocio(client) {
  * proporcionalmente (scaleX/scaleY).
  */
 function drawField(page, font, text, field, scaleX, scaleY, pageHeight, label) {
-  const x1 = field.x1 * scaleX;
-  const x2 = field.x2 * scaleX;
+  const textX = field.startX * scaleX;
   const yTop1 = field.yTop1 * scaleY;
   const yTop2 = field.yTop2 * scaleY;
-  const padding = PADDING_REF * scaleX;
   const fontSize = FONT_SIZE_REF * scaleY;
 
   // pdf-lib mide "y" desde abajo: y_pdf_lib = pageHeight - y_desde_arriba.
   const yBottom1 = pageHeight - yTop2;
   const yBottom2 = pageHeight - yTop1;
-  const textX = x1 + padding;
   // drawText posiciona la línea base de la fuente; restamos una fracción
   // del tamaño de fuente para que el texto quede centrado visualmente.
   const textY = (yBottom1 + yBottom2) / 2 - fontSize * 0.32;
 
   console.log(
-    `[generateCard] ${label}: rect pt = (${x1.toFixed(1)}, ${yBottom1.toFixed(1)}) - ` +
-      `(${x2.toFixed(1)}, ${yBottom2.toFixed(1)}); texto en (${textX.toFixed(1)}, ${textY.toFixed(1)}); ` +
-      `fontSize = ${fontSize.toFixed(1)}pt`
+    `[generateCard] ${label}: y = (${yBottom1.toFixed(1)} - ${yBottom2.toFixed(1)}); ` +
+      `texto en (${textX.toFixed(1)}, ${textY.toFixed(1)}); fontSize = ${fontSize.toFixed(1)}pt`
   );
 
   page.drawText(text, { x: textX, y: textY, size: fontSize, font, color: TEXT_COLOR });
