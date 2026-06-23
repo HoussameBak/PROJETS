@@ -79,6 +79,9 @@ export async function generateCardPdfBlob(pdfArrayBuffer, client) {
   return new Blob([bytes], { type: "application/pdf" });
 }
 
+// Alias usado por la generación de ZIP, en paralelo a generateDocxBlob.
+export const generateCardBlob = generateCardPdfBlob;
+
 /**
  * Genera y descarga la tarjeta en PDF con el nombre indicado.
  */
