@@ -70,7 +70,7 @@ export async function generateCardPdfBlob(pdfArrayBuffer, client) {
 
   const scaleX = pageWidth / REF_PAGE_WIDTH;
   const scaleY = pageHeight / REF_PAGE_HEIGHT;
-  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
   drawField(page, font, getNumSocio(client), FIELDS.numSocio, scaleX, scaleY, pageHeight, "Nº socio/a");
   drawField(page, font, (client.Nombre ?? "").trim(), FIELDS.titular, scaleX, scaleY, pageHeight, "Titular");
