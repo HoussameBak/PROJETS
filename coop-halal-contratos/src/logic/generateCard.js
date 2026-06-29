@@ -62,16 +62,19 @@ function detectProfile(pageWidth, pageHeight) {
 
 /**
  * Dibuja un campo de texto centrado verticalmente entre yTop y yBottom,
- * comenzando en x. Las coordenadas y el tamaño de fuente se escalan
- * proporcionalmente si la página cargada difiere del tamaño de referencia.
+ * comenzando en x. Las coordenadas se anclan al origen del MediaBox de la
+ * página (originX/topY) para soportar PDFs cuyo MediaBox no empieza en (0,0)
+ * —habitual en PDFs preparados para imprenta con sangrado—, y se escalan
+ * proporcionalmente si la página difiere del tamaño de referencia.
  */
-function drawField(page, font, text, field, scaleX, scaleY, pageHeight, label) {
-  const textX = field.x * scaleX;
+function drawField(page, font, text, field, scaleX, scaleY, originX, topY, label) {
+  const textX = originX + field.x * scaleX;
   const fontSize = field.fontSize * scaleY;
 
-  // pdf-lib mide "y" desde abajo: y_pdf_lib = pageHeight - y_desde_arriba.
-  const yBottom = pageHeight - field.yBottom * scaleY;
-  const yTop = pageHeight - field.yTop * scaleY;
+  // topY es la coordenada pdf-lib (desde abajo) del borde SUPERIOR visible de
+  // la página: y_pdf_lib = topY - y_desde_arriba.
+  const yBottom = topY - field.yBottom * scaleY;
+  const yTop = topY - field.yTop * scaleY;
   // drawText posiciona la línea base de la fuente; restamos una fracción del
   // tamaño de fuente para que el texto quede centrado visualmente.
   const textY = (yBottom + yTop) / 2 - fontSize * 0.32;
@@ -91,21 +94,26 @@ function drawField(page, font, text, field, scaleX, scaleY, pageHeight, label) {
 export async function generateCardPdfBlob(pdfArrayBuffer, client) {
   const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
   const page = pdfDoc.getPages()[0];
-  const { width: pageWidth, height: pageHeight } = page.getSize();
+  // Usamos el MediaBox para tener en cuenta páginas cuyo origen no es (0,0).
+  const box = page.getMediaBox();
+  const pageWidth = box.width;
+  const pageHeight = box.height;
+  const originX = box.x;
+  const topY = box.y + box.height; // borde superior visible en coords pdf-lib
 
   const profile = detectProfile(pageWidth, pageHeight);
 
   console.log(
-    `[generateCard] Página de fondo: ${pageWidth.toFixed(1)} x ${pageHeight.toFixed(1)} pt; ` +
-      `perfil = ${profile.name}`
+    `[generateCard] Página de fondo: ${pageWidth.toFixed(1)} x ${pageHeight.toFixed(1)} pt ` +
+      `(origen ${originX.toFixed(1)}, ${box.y.toFixed(1)}); perfil = ${profile.name}`
   );
 
   const scaleX = pageWidth / profile.refWidth;
   const scaleY = pageHeight / profile.refHeight;
   const font = await pdfDoc.embedFont(StandardFonts[profile.font]);
 
-  drawField(page, font, getNumSocio(client), profile.fields.numSocio, scaleX, scaleY, pageHeight, "Nº socio/a");
-  drawField(page, font, (client.Nombre ?? "").trim(), profile.fields.titular, scaleX, scaleY, pageHeight, "Titular");
+  drawField(page, font, getNumSocio(client), profile.fields.numSocio, scaleX, scaleY, originX, topY, "Nº socio/a");
+  drawField(page, font, (client.Nombre ?? "").trim(), profile.fields.titular, scaleX, scaleY, originX, topY, "Titular");
 
   const bytes = await pdfDoc.save();
   return new Blob([bytes], { type: "application/pdf" });
