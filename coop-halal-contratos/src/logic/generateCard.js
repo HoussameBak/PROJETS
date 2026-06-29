@@ -119,6 +119,20 @@ export async function generateCardPdfBlob(pdfArrayBuffer, client) {
   return new Blob([bytes], { type: "application/pdf" });
 }
 
+// Nombres legibles por perfil, para etiquetar las plantillas guardadas.
+const PROFILE_LABELS = { coophalal: "CoopHalal", takaful: "Takaful" };
+
+/**
+ * Carga el PDF y devuelve el nombre legible del perfil detectado
+ * ("CoopHalal" / "Takaful") según las dimensiones de la primera página.
+ */
+export async function detectCardProfileName(pdfArrayBuffer) {
+  const pdfDoc = await PDFDocument.load(pdfArrayBuffer);
+  const box = pdfDoc.getPages()[0].getMediaBox();
+  const profile = detectProfile(box.width, box.height);
+  return PROFILE_LABELS[profile.name] ?? profile.name;
+}
+
 // Alias usado por la generación de ZIP, en paralelo a generateDocxBlob.
 export const generateCardBlob = generateCardPdfBlob;
 

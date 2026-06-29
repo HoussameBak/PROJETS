@@ -84,6 +84,60 @@ h1 {
   flex-wrap: wrap;
 }
 
+/* --- Lista de plantillas de tarjeta guardadas --- */
+.card-template-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-template-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-template-pick {
+  flex: 1;
+  text-align: left;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.card-template-pick:hover {
+  background: var(--accent-bg);
+}
+
+.card-template-item-active .card-template-pick {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  font-weight: 600;
+}
+
+.card-template-del {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.card-template-del:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
 /* --- Selector de cliente --- */
 .selector {
   display: flex;

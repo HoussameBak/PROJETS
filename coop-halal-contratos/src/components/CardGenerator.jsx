@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import ClientSelector from "./ClientSelector.jsx";
 import MultiClientSelector from "./MultiClientSelector.jsx";
-import { downloadCardPdf } from "../logic/generateCard.js";
+import { downloadCardPdf, detectCardProfileName } from "../logic/generateCard.js";
 import { downloadCardZip } from "../logic/generateZip.js";
+import {
+  loadCardTemplates,
+  addCardTemplate,
+  removeCardTemplate,
+  getLastUsedId,
+  setLastUsedId,
+  base64ToArrayBuffer,
+} from "../logic/cardTemplates.js";
 
 const safeName = (s) =>
   String(s ?? "")
@@ -10,8 +18,16 @@ const safeName = (s) =>
     .trim() || "sin_dato";
 
 export default function CardGenerator({ clients }) {
-  const [cardPdfBuffer, setCardPdfBuffer] = useState(null);
-  const [cardPdfName, setCardPdfName] = useState("");
+  const fileInputRef = useRef(null);
+
+  const [templates, setTemplates] = useState(() => loadCardTemplates());
+  const [selectedId, setSelectedId] = useState(() => {
+    const list = loadCardTemplates();
+    const last = getLastUsedId();
+    if (last && list.some((t) => t.id === last)) return last;
+    return list.length > 0 ? list[0].id : null;
+  });
+
   const [multiMode, setMultiMode] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(clients.length > 0 ? 0 : -1);
   const [selectedSet, setSelectedSet] = useState(new Set());
@@ -19,20 +35,43 @@ export default function CardGenerator({ clients }) {
   const [downloading, setDownloading] = useState(false);
   const [zipLoading, setZipLoading] = useState(false);
 
+  const selectedTemplate = templates.find((t) => t.id === selectedId) || null;
+  // El ArrayBuffer del PDF de fondo actualmente seleccionado.
+  const cardPdfBuffer = useMemo(
+    () => (selectedTemplate ? base64ToArrayBuffer(selectedTemplate.dataBase64) : null),
+    [selectedTemplate]
+  );
+
   const selectedClient = selectedIndex >= 0 ? clients[selectedIndex] || null : null;
+
+  const handleSelectTemplate = (id) => {
+    setSelectedId(id);
+    setLastUsedId(id);
+  };
+
+  const handleAddClick = () => fileInputRef.current?.click();
 
   const handlePdfChange = async (e) => {
     const file = e.target.files?.[0];
+    e.target.value = ""; // permitir recargar el mismo archivo
     if (!file) return;
     setError("");
     try {
       const arrayBuffer = await file.arrayBuffer();
-      setCardPdfBuffer(arrayBuffer);
-      setCardPdfName(file.name);
+      const name = await detectCardProfileName(arrayBuffer);
+      const { list, entry } = addCardTemplate(arrayBuffer, name);
+      setTemplates(list);
+      handleSelectTemplate(entry.id);
     } catch (err) {
-      setCardPdfBuffer(null);
-      setCardPdfName("");
       setError(err.message);
+    }
+  };
+
+  const handleRemoveTemplate = (id) => {
+    const next = removeCardTemplate(id);
+    setTemplates(next);
+    if (selectedId === id) {
+      setSelectedId(next.length > 0 ? next[0].id : null);
     }
   };
 
@@ -93,9 +132,49 @@ export default function CardGenerator({ clients }) {
     <div className="card-generator">
       <section className="loaders no-print">
         <div className="uploader">
-          <label className="uploader-label">PDF de fondo de la tarjeta (.pdf)</label>
-          <input type="file" accept=".pdf" onChange={handlePdfChange} />
-          {cardPdfName && <span className="file-ok">✓ {cardPdfName}</span>}
+          <label className="uploader-label">Plantilla de fondo de la tarjeta</label>
+
+          {templates.length > 0 ? (
+            <ul className="card-template-list">
+              {templates.map((t) => (
+                <li
+                  key={t.id}
+                  className={`card-template-item${t.id === selectedId ? " card-template-item-active" : ""}`}
+                >
+                  <button
+                    type="button"
+                    className="card-template-pick"
+                    onClick={() => handleSelectTemplate(t.id)}
+                  >
+                    {t.id === selectedId ? "● " : "○ "}
+                    {t.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="card-template-del"
+                    onClick={() => handleRemoveTemplate(t.id)}
+                    aria-label={`Eliminar plantilla ${t.name}`}
+                    title="Eliminar plantilla"
+                  >
+                    🗑️
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">No hay plantillas guardadas todavía.</p>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            onChange={handlePdfChange}
+            style={{ display: "none" }}
+          />
+          <button type="button" className="btn-link" onClick={handleAddClick}>
+            + Añadir nueva plantilla
+          </button>
         </div>
       </section>
 
@@ -154,7 +233,7 @@ export default function CardGenerator({ clients }) {
 
       {!ready && (
         <div className="preview-empty">
-          Carga el PDF de fondo de la tarjeta y selecciona uno o más clientes
+          Elige (o añade) una plantilla de fondo y selecciona uno o más clientes
           para poder descargar la(s) tarjeta(s).
         </div>
       )}
