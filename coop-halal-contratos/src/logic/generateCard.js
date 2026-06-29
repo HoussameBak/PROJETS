@@ -11,7 +11,7 @@ const CARD_PROFILES = [
     name: "coophalal",
     refWidth: 2400.75,
     refHeight: 1920.75,
-    font: "Helvetica",
+    font: "TimesRoman",
     fields: {
       numSocio: { x: 860, yTop: 1136.8, yBottom: 1253.1, fontSize: 100 },
       titular: { x: 680, yTop: 1261.3, yBottom: 1377.6, fontSize: 100 },
